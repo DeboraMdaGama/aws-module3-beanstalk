@@ -1,0 +1,96 @@
+Parameters:
+  DBSubnetGp:
+    Type: String
+    Default: DBSubnetGp
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+  Vpc:
+    Type: AWS::EC2::VPC::Id
+  SecurityGp:
+    Type: String
+    Default: DBSecurityGp
+  Ip:
+    Type: String
+  DBInstanceIdentifier:
+    Type: String
+    Default: wordpress
+  DBPassword:
+    Type: String
+  DBInstanceClass:
+    Type: String
+    Default: db.t2.micro
+
+Resources:
+  DBSubnetGroups:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Ref DBSubnetGp
+      DBSubnetGroupName: !Ref DBSubnetGp
+      SubnetIds:
+        - !Ref SubnetA
+  DBSecurityGp:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Ref SecurityGp
+      VpcId: !Ref Vpc
+      GroupName: !Ref SecurityGp
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: !Ref Ip
+  DatabaseInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Ref DBInstanceIdentifier
+      DBInstanceClass: !Ref DBInstanceClass
+      DBName: !Ref DBInstanceIdentifier
+      Engine: mysql
+      MasterUserPassword: !Ref DBPassword
+      MasterUsername: admin
+      PubliclyAccessible: true
+      AllocatedStorage: 20
+      DBSubnetGroupName: !Ref DBSubnetGp
+      VPCSecurityGroups:
+        - !Ref DBSecurityGp
+  sampleApplication:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      Description: AWS Elastic Beanstalk Sample Application
+  sampleConfigurationTemplate:
+    Type: AWS::ElasticBeanstalk::ConfigurationTemplate
+    Properties:
+      ApplicationName:
+        Ref: sampleApplication
+      Description: AWS ElasticBeanstalk Sample Configuration Template
+      OptionSettings:
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: InstanceType
+          Value: t2.micro
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: IamInstanceProfile
+          Value: aws-elasticbeanstalk-ec2-role
+        - Namespace: aws:autoscaling:asg
+          OptionName: MinSize
+          Value: "1"
+        - Namespace: aws:autoscaling:asg
+          OptionName: MaxSize
+          Value: "2"
+        - Namespace: aws:autoscaling:asg
+          OptionName: Custom Availability Zones
+          Value: "us-east-1a, us-east-1b"
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: EnvironmentType
+          Value: LoadBalanced
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: LoadBalancerType
+          Value: application
+      SolutionStackName: 64bit Amazon Linux 2 v3.5.0 running PHP 8.1
+  BeanstalkProjectModule3:
+    Type: AWS::ElasticBeanstalk::Environment
+    Properties:
+      ApplicationName:
+        Ref: sampleApplication
+      Description: AWS ElasticBeanstalk Sample Environment
+      TemplateName:
+        Ref: sampleConfigurationTemplate
