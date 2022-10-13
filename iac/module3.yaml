@@ -4,6 +4,8 @@ Parameters:
     Default: DBSubnetGp
   SubnetA:
     Type: AWS::EC2::Subnet::Id
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
   Vpc:
     Type: AWS::EC2::VPC::Id
   SecurityGp:
@@ -28,6 +30,7 @@ Resources:
       DBSubnetGroupName: !Ref DBSubnetGp
       SubnetIds:
         - !Ref SubnetA
+        - !Ref SubnetB
   DBSecurityGp:
     Type: AWS::EC2::SecurityGroup
     Properties:
